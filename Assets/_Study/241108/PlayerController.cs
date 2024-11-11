@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class PlayerController : NetworkBehaviour
 {
+    [SerializeField] PlayerModel playerModel;
+    [SerializeField] Weapon weapon;
+
     [SerializeField] CharacterController controller;
     [SerializeField] float moveSpeed;
 
@@ -17,8 +20,26 @@ public class PlayerController : NetworkBehaviour
     {
         inputDir.x = Input.GetAxisRaw("Horizontal");
         inputDir.z = Input.GetAxisRaw("Vertical");
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (HasStateAuthority == false) return;
+
+            weapon.Fire();
+        }
     }
 
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    // Rpc = 원격 함수 호출
+    // RpcSources = 누가 해당 함수를 실행할 수 있는지 설정해줄 수 있다.
+    // RpcTargets = 누가 해당 함수를 실행할 것인지 설정해줄 수 있다.
+    public void TakeHitRpc(int damage)
+    {
+        playerModel.hp--;
+    }
+
+
+ 
     // 네트워크 통신 주기마다 호출되는 함수 FixedUpdateNetwork
     // 네트워크에서 처리할 작업을 구현한다.
     public override void FixedUpdateNetwork()
@@ -43,5 +64,7 @@ public class PlayerController : NetworkBehaviour
             CameraController camController = Camera.main.GetComponent<CameraController>();
             camController.target = transform;
         }
+
+        playerModel.hp = playerModel.maxHp;
     }
 }
